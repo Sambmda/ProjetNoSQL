@@ -1,6 +1,6 @@
 # Projet NoSQL
 
-CHAMAND Luigi
+CHAMAND Luigi<br>
 BENHAMED-AUBRY Samir
 
 ## TODO
