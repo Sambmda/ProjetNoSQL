@@ -1,0 +1,32 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - postgres
+      - mongo
+    ports:
+      - "8080:80"
+      
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: user_no_sql
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: projet_nosql
+    volumes:
+      - ./init-postgres.sql:/docker-entrypoint-initdb.d/init-postgres.sql
+    ports:
+      - "5432:5432"
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo_db
+    restart: always
+    ports:
+      - "27017:27017"

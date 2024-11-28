@@ -74,6 +74,7 @@
         <div class="form-section">
             <h2>Créer un client (base relationelle)</h2>
             <form action="" method="POST">
+				<input type="hidden" name="database_type" value="relationelle">
                 <label for="nom">Nom :</label>
                 <input type="text" id="nom" name="nom" required>
                 <label for="prenom">Prénom :</label>
@@ -136,3 +137,69 @@
     </div>
 </body>
 </html>
+
+<?php
+require 'vendor/autoload.php';
+// Attendre quelques secondes avant d'essayer de se connecter
+sleep(5);
+// Connexions aux bases de données
+$pg_conn = pg_connect("host=postgres_db port=5432 dbname=projet_nosql user=user_no_sql password=password");
+$mongo = new MongoDB\Client("mongodb://mongo_db:27017");
+$mongo_db = $mongo->projet_nosql;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Détection du formulaire
+    if (isset($_POST['nom'], $_POST['prenom'], $_POST['login'], $_POST['adresse'], $_POST['telephone'], $_POST['email'], $_POST['database_type'])) {
+        $nom = $_POST['nom'];
+        $prenom = $_POST['prenom'];
+        $login = $_POST['login'];
+        $adresse = $_POST['adresse'];
+        $telephone = $_POST['telephone'];
+        $email = $_POST['email'];
+        $database_type = $_POST['database_type']; // Récupérer le type de base de données choisi
+
+        if ($database_type === 'relationelle') {
+            // Insertion dans PostgreSQL
+            $query = "INSERT INTO clients (nom, prenom, login, adresse, telephone, email) VALUES ($1, $2, $3, $4, $5, $6)";
+            pg_query_params($pg_conn, $query, [$nom, $prenom, $login, $adresse, $telephone, $email]);
+        } else {
+            // Insertion dans MongoDB
+            $mongo_db->clients->insertOne([
+                'nom' => $nom,
+                'prenom' => $prenom,
+                'login' => $login,
+                'adresse' => $adresse,
+                'telephone' => $telephone,
+                'email' => $email
+            ]);
+        }
+    } elseif (isset($_POST['login-delete'], $_POST['database_type'])) {
+        $login = $_POST['login-delete'];
+        $database_type = $_POST['database_type']; // Récupérer le type de base de données choisi
+
+        if ($database_type === 'relationelle') {
+            // Suppression dans PostgreSQL
+            $query = "DELETE FROM clients WHERE login = $1";
+            pg_query_params($pg_conn, $query, [$login]);
+        } else {
+            // Suppression dans MongoDB
+            $mongo_db->clients->deleteOne(['login' => $login]);
+        }
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['login'])) {
+    $login = $_GET['login'];
+    $database_type = $_GET['database_type'] ?? 'relationelle'; // Par défaut, relationnelle si non précisé
+
+    if ($database_type === 'relationelle') {
+        // Lecture dans PostgreSQL
+        $query = "SELECT * FROM clients WHERE login = $1";
+        $result = pg_query_params($pg_conn, $query, [$login]);
+        $client = pg_fetch_assoc($result);
+        print_r($client);
+    } else {
+        // Lecture dans MongoDB
+        $client = $mongo_db->clients->findOne(['login' => $login]);
+        print_r($client);
+    }
+}
+?>
