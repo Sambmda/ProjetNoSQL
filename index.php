@@ -57,12 +57,21 @@
         function toggleDatabase() {
             const forms = document.querySelectorAll('.form-section h2');
             forms.forEach(form => {
-                if (form.textContent.includes('relationelle')) {
-                    form.textContent = form.textContent.replace('relationelle', 'non relationelle');
+                if (form.textContent.includes('non relationnelle')) {
+                    form.textContent = form.textContent.replace('non relationnelle', 'relationnelle');
                 } else {
-                    form.textContent = form.textContent.replace('non relationelle', 'relationelle');
+                    form.textContent = form.textContent.replace('relationnelle', 'non relationnelle');
                 }
             });
+			// Modifier la valeur de l'input avec name="database_type"
+			const inputs = document.querySelectorAll('input[name="database_type"]');
+			inputs.forEach(input => {
+				if (input.value.includes('non relationnelle')) {
+					input.value = 'relationnelle';
+				} else {
+					input.value = 'non relationnelle';
+				}
+			});
         }
     </script>
 </head>
@@ -72,9 +81,9 @@
     <div class="container">
         <!-- Section Create -->
         <div class="form-section">
-            <h2>Créer un client (base relationelle)</h2>
+            <h2>Créer un client (base relationnelle)</h2>
             <form action="" method="POST">
-				<input type="hidden" name="database_type" value="relationelle">
+				<input type="hidden" name="database_type" value="relationnelle">
                 <label for="nom">Nom :</label>
                 <input type="text" id="nom" name="nom" required>
                 <label for="prenom">Prénom :</label>
@@ -94,10 +103,11 @@
 
         <!-- Section Read -->
         <div class="form-section">
-            <h2>Lire un client (base relationelle)</h2>
+            <h2>Lire un client (base relationnelle)</h2>
             <form action="" method="GET">
+				<input type="hidden" name="database_type" value="relationnelle">
                 <label for="login-read">Login :</label>
-                <input type="text" id="login-read" name="login" required>
+                <input type="text" id="login-read" name="login-read" required>
                 <button type="submit">Lire</button>
             </form>
             <!-- TODO: Ajouter la requête SQL ou NoSQL pour lire un client -->
@@ -105,20 +115,21 @@
 
         <!-- Section Update -->
         <div class="form-section">
-            <h2>Mettre à jour un client (base relationelle)</h2>
+            <h2>Mettre à jour un client (base relationnelle)</h2>
             <form action="" method="POST">
+				<input type="hidden" name="database_type" value="relationnelle">
                 <label for="nom-update">Nom :</label>
-                <input type="text" id="nom-update" name="nom" required>
+                <input type="text" id="nom-update" name="nom-update" required>
                 <label for="prenom-update">Prénom :</label>
-                <input type="text" id="prenom-update" name="prenom" required>
+                <input type="text" id="prenom-update" name="prenom-update" required>
                 <label for="login-update">Login :</label>
-                <input type="text" id="login-update" name="login" required>
+                <input type="text" id="login-update" name="login-update" required>
                 <label for="adresse-update">Adresse :</label>
-                <input type="text" id="adresse-update" name="adresse" required>
+                <input type="text" id="adresse-update" name="adresse-update" required>
                 <label for="telephone-update">Numéro de téléphone :</label>
-                <input type="text" id="telephone-update" name="telephone" required>
+                <input type="text" id="telephone-update" name="telephone-update" required>
                 <label for="email-update">Email :</label>
-                <input type="email" id="email-update" name="email" required>
+                <input type="email" id="email-update" name="email-update" required>
                 <button type="submit">Mettre à jour</button>
             </form>
             <!-- TODO: Ajouter la requête SQL ou NoSQL pour mettre à jour un client -->
@@ -126,10 +137,11 @@
 
         <!-- Section Delete -->
         <div class="form-section">
-            <h2>Supprimer un client (base relationelle)</h2>
+            <h2>Supprimer un client (base relationnelle)</h2>
             <form action="" method="POST">
+				<input type="hidden" name="database_type" value="relationnelle">
                 <label for="login-delete">Login :</label>
-                <input type="text" id="login-delete" name="login" required>
+                <input type="text" id="login-delete" name="login-delete" required>
                 <button type="submit">Supprimer</button>
             </form>
             <!-- TODO: Ajouter la requête SQL ou NoSQL pour supprimer un client -->
@@ -158,9 +170,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = $_POST['email'];
         $database_type = $_POST['database_type']; // Récupérer le type de base de données choisi
 
-        if ($database_type === 'relationelle') {
+        if ($database_type === 'relationnelle') {
             // Insertion dans PostgreSQL
-            $query = "INSERT INTO clients (nom, prenom, login, adresse, telephone, email) VALUES ($1, $2, $3, $4, $5, $6)";
+            $query = "INSERT INTO clients (nom, prenom, login, adresse, telephone, email) VALUES ($1, $2, $3, $4, $5, $6);";
             pg_query_params($pg_conn, $query, [$nom, $prenom, $login, $adresse, $telephone, $email]);
         } else {
             // Insertion dans MongoDB
@@ -170,29 +182,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'login' => $login,
                 'adresse' => $adresse,
                 'telephone' => $telephone,
-                'email' => $email
-            ]);
+                'email' => $email]);
         }
     } elseif (isset($_POST['login-delete'], $_POST['database_type'])) {
         $login = $_POST['login-delete'];
         $database_type = $_POST['database_type']; // Récupérer le type de base de données choisi
 
-        if ($database_type === 'relationelle') {
+        if ($database_type === 'relationnelle') {
             // Suppression dans PostgreSQL
-            $query = "DELETE FROM clients WHERE login = $1";
-            pg_query_params($pg_conn, $query, [$login]);
+			$query = "DELETE FROM clients WHERE login = $1;";
+			pg_query_params($pg_conn, $query, [$login]);
         } else {
             // Suppression dans MongoDB
             $mongo_db->clients->deleteOne(['login' => $login]);
         }
-    }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['login'])) {
-    $login = $_GET['login'];
-    $database_type = $_GET['database_type'] ?? 'relationelle'; // Par défaut, relationnelle si non précisé
+	} elseif (isset($_POST['login-update'], $_POST['nom-update'], $_POST['prenom-update'], $_POST['adresse-update'], $_POST['telephone-update'], $_POST['email-update'], $_POST['database_type'])) {
+        $login = $_POST['login-update'];
+        $nom = $_POST['nom-update'];
+        $prenom = $_POST['prenom-update'];
+        $adresse = $_POST['adresse-update'];
+        $telephone = $_POST['telephone-update'];
+        $email = $_POST['email-update'];
+        $database_type = $_POST['database_type']; // Récupérer le type de base de données choisi
 
-    if ($database_type === 'relationelle') {
+        if ($database_type === 'relationnelle') {
+            // Mise à jour dans PostgreSQL
+            $query = "UPDATE clients SET nom = $1, prenom = $2, adresse = $3, telephone = $4, email = $5 WHERE login = $6 ;";
+            pg_query_params($pg_conn, $query, [$nom, $prenom, $adresse, $telephone, $email, $login]);
+        } else {
+            // Mise à jour dans MongoDB
+            $mongo_db->clients->updateOne(
+                ['login' => $login],
+                ['$set' => [
+                    'nom' => $nom,
+                    'prenom' => $prenom,
+                    'adresse' => $adresse,
+                    'telephone' => $telephone,
+                    'email' => $email]]);
+        }
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['login-read'])) {
+    $login = $_GET['login-read'];
+    $database_type = $_GET['database_type'] ?? 'relationnelle'; // Par défaut, relationnelle si non précisé
+
+    if ($database_type === 'relationnelle') {
         // Lecture dans PostgreSQL
-        $query = "SELECT * FROM clients WHERE login = $1";
+        $query = "SELECT * FROM clients WHERE login = $1 ;";
         $result = pg_query_params($pg_conn, $query, [$login]);
         $client = pg_fetch_assoc($result);
         print_r($client);
