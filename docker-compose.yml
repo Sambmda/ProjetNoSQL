@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: php_web
     volumes:
       - ./:/var/www/html
     depends_on:
