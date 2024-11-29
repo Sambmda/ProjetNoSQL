@@ -21,6 +21,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: projet_nosql
     volumes:
+      - postgres_data:/var/lib/postgresql/data
       - ./init-postgres.sql:/docker-entrypoint-initdb.d/init-postgres.sql
     ports:
       - "5432:5432"
@@ -29,5 +30,11 @@ services:
     image: mongo:latest
     container_name: mongo_db
     restart: always
+    volumes:
+      - mongo_data:/data/db
     ports:
       - "27017:27017"
+      
+volumes:
+  postgres_data:
+  mongo_data:
