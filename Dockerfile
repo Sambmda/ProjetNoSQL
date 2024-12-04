@@ -17,7 +17,7 @@ RUN curl -sS https://getcomposer.org/installer | php \
 COPY . /var/www/html/
 
 # Expose le port 80 à l'extérieur
-EXPOSE 80
+EXPOSE 8080
 
 # Assurez-vous que les permissions des fichiers sont correctement définies
 RUN chown -R www-data:www-data /var/www/html
